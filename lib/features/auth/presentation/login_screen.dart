@@ -206,6 +206,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ],
 
+                  const SizedBox(height: 14),
+                  TwinButton(
+                    text: 'Hızlı Test Modu ile Keşfet (Demo)',
+                    variant: TwinButtonVariant.secondary,
+                    leadingIcon: Icons.bolt,
+                    onPressed: () async {
+                      final success = await ref.read(authProvider.notifier).signInAsDemoUser();
+                      if (success && mounted) {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                          (route) => false,
+                        );
+                      }
+                    },
+                  ),
+
                   const SizedBox(height: 28),
 
                   // Register Link

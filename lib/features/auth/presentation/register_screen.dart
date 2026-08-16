@@ -152,6 +152,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     onPressed: _handleRegister,
                     trailingIcon: Icons.arrow_forward,
                   ),
+                  const SizedBox(height: 12),
+
+                  TwinButton(
+                    text: 'Hızlı Test Modu ile Keşfet (Demo)',
+                    variant: TwinButtonVariant.secondary,
+                    leadingIcon: Icons.bolt,
+                    onPressed: () async {
+                      final success = await ref.read(authProvider.notifier).signInAsDemoUser();
+                      if (success && mounted) {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+                          (route) => false,
+                        );
+                      }
+                    },
+                  ),
                   const SizedBox(height: 20),
 
                   Row(

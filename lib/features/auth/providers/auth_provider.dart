@@ -106,6 +106,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  String _parseAuthError(dynamic error) {
+    final str = error.toString().replaceAll('AuthException: ', '');
+    if (str.contains('429') || str.toLowerCase().contains('rate limit') || str.toLowerCase().contains('too many requests')) {
+      return 'Supabase E-posta Hız Limiti Aşıldı (429 Rate Limit). Lütfen birkaç dakika bekleyin veya aşağıdaki "Hızlı Demo ile Giriş Yap" butonunu kullanın.';
+    }
+    if (str.toLowerCase().contains('invalid login credentials')) {
+      return 'Geçersiz e-posta veya şifre girdiniz.';
+    }
+    if (str.toLowerCase().contains('user already registered')) {
+      return 'Bu e-posta adresi ile zaten bir hesap kayıtlı. Lütfen giriş yapın.';
+    }
+    return str;
+  }
+
   Future<bool> signInWithEmail(String email, String password) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
@@ -131,7 +145,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
-        errorMessage: e.toString().replaceAll('AuthException: ', ''),
+        errorMessage: _parseAuthError(e),
       );
       return false;
     }
@@ -171,7 +185,47 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
-        errorMessage: e.toString().replaceAll('AuthException: ', ''),
+        errorMessage: _parseAuthError(e),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> signInAsDemoUser() async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    try {
+      final demoProfile = UserProfile(
+        id: 'demo-user-twinfit-01',
+        email: 'demo@twinfit.ai',
+        fullName: 'Mevlüt Şeran (Biyolojik Sporcu)',
+        gender: 'male',
+        heightCm: 180.0,
+        weightKg: 80.0,
+        bodyFatPercentage: 14.0,
+        torsoFemurRatio: 'average',
+        armLengthType: 'average',
+        jointSensitivities: ['shoulder'],
+        fitnessGoal: 'hypertrophy',
+        experienceLevel: 'intermediate',
+        cnsFatigueCapacity: 100,
+        dailyCalorieTarget: 2650,
+        dailyProteinTargetG: 165,
+        dailyCarbTargetG: 290,
+        dailyFatTargetG: 75,
+        dailyWaterTargetMl: 3200,
+      );
+
+      await LocalStorageService.saveJson('twinfit_cached_profile', demoProfile.toJson());
+
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        profile: demoProfile,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        errorMessage: 'Demo oturumu başlatılamadı: $e',
       );
       return false;
     }
