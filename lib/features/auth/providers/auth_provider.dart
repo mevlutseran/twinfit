@@ -147,17 +147,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
 
       if (response.user != null) {
-        final newProfile = UserProfile(
+        UserProfile? profile;
+        try {
+          profile = await fetchProfile(response.user!.id);
+        } catch (_) {}
+
+        profile ??= UserProfile(
           id: response.user!.id,
-          email: response.user!.email ?? email,
+          email: response.user!.email ?? email.trim(),
           fullName: fullName,
         );
-        await SupabaseService.client.from('profiles').upsert(newProfile.toJson());
+
+        await LocalStorageService.saveJson('twinfit_cached_profile', profile.toJson());
 
         state = state.copyWith(
           status: AuthStatus.authenticated,
           user: response.user,
-          profile: newProfile,
+          profile: profile,
         );
         return true;
       }
